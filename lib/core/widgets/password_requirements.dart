@@ -18,7 +18,7 @@ class PasswordRequirements extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceVariant,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(22.4),
         border: Border.all(color: theme.colorScheme.outline),
       ),
       child: Column(

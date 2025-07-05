@@ -13,15 +13,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       return authState.when(
         data: (auth) {
           final isLoggedIn = auth.isAuthenticated;
-          final isGoingToAuth = state.matchedLocation == '/auth';
+          final isGoingToLogin = state.matchedLocation == '/login';
+          final isGoingToRegister = state.matchedLocation == '/register';
+          final isGoingToAuth = isGoingToLogin || isGoingToRegister;
           final isGoingToSplash = state.matchedLocation == '/';
 
-          // If not logged in and not going to auth or splash, redirect to auth
+          // If not logged in and not going to auth screens or splash, redirect to login
           if (!isLoggedIn && !isGoingToAuth && !isGoingToSplash) {
             return '/login';
           }
 
-          // If logged in and going to auth or splash, redirect to home
+          // If logged in and going to auth screens or splash, redirect to home
           if (isLoggedIn && (isGoingToAuth || isGoingToSplash)) {
             return '/home';
           }
