@@ -6,6 +6,7 @@ class AppTheme {
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
+    fontFamily: 'PlusJakartaSans',
     colorScheme: const ColorScheme.light(
       primary: AppColors.lightPrimary,
       onPrimary: AppColors.lightPrimaryForeground,
@@ -75,16 +76,23 @@ class AppTheme {
         color: AppColors.lightForeground,
         fontSize: 32,
         fontWeight: FontWeight.bold,
+        fontFamily: 'PlusJakartaSans',
       ),
       headlineMedium: TextStyle(
         color: AppColors.lightForeground,
         fontSize: 24,
         fontWeight: FontWeight.w600,
+        fontFamily: 'PlusJakartaSans',
       ),
-      bodyLarge: TextStyle(color: AppColors.lightForeground, fontSize: 16),
+      bodyLarge: TextStyle(
+        color: AppColors.lightForeground,
+        fontSize: 16,
+        fontFamily: 'PlusJakartaSans',
+      ),
       bodyMedium: TextStyle(
         color: AppColors.lightMutedForeground,
         fontSize: 14,
+        fontFamily: 'PlusJakartaSans',
       ),
     ),
   );
@@ -93,6 +101,7 @@ class AppTheme {
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
+    fontFamily: 'PlusJakartaSans',
     colorScheme: const ColorScheme.dark(
       primary: AppColors.darkPrimary,
       onPrimary: AppColors.darkPrimaryForeground,
@@ -160,14 +169,24 @@ class AppTheme {
         color: AppColors.darkForeground,
         fontSize: 32,
         fontWeight: FontWeight.bold,
+        fontFamily: 'PlusJakartaSans',
       ),
       headlineMedium: TextStyle(
         color: AppColors.darkForeground,
         fontSize: 24,
         fontWeight: FontWeight.w600,
+        fontFamily: 'PlusJakartaSans',
       ),
-      bodyLarge: TextStyle(color: AppColors.darkForeground, fontSize: 16),
-      bodyMedium: TextStyle(color: AppColors.darkMutedForeground, fontSize: 14),
+      bodyLarge: TextStyle(
+        color: AppColors.darkForeground,
+        fontSize: 16,
+        fontFamily: 'PlusJakartaSans',
+      ),
+      bodyMedium: TextStyle(
+        color: AppColors.darkMutedForeground,
+        fontSize: 14,
+        fontFamily: 'PlusJakartaSans',
+      ),
     ),
   );
 }
