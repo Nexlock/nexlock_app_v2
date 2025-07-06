@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:nexlock_app_v2/core/handlers/dio_exception_handler.dart';
 import 'package:nexlock_app_v2/core/handlers/dio_handler.dart';
 import 'package:nexlock_app_v2/core/handlers/secure_storage_handler.dart';
+import 'package:nexlock_app_v2/features/auth/domain/data/models/user_jwt_model.dart';
 
 class AuthRepository {
   final SecureStorage _secureStorage = SecureStorage();
@@ -75,7 +76,7 @@ class AuthRepository {
     }
   }
 
-  Future<Map<String, dynamic>> getUserFromToken() async {
+  Future<UserJwtModel> getUserFromToken() async {
     try {
       final token = await _secureStorage.getToken();
 
@@ -88,7 +89,7 @@ class AuthRepository {
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
-      return response.data;
+      return UserJwtModel.fromJson(response.data);
     } catch (e) {
       if (e is DioException) {
         final errorMessage = parseDioError(e);

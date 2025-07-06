@@ -15,8 +15,11 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     if (token != null) {
       try {
         final userData = await _authRepository.getUserFromToken();
-        final user = UserJwtModel.fromJson(userData);
-        return AuthState(user: user, isAuthenticated: true, isLoading: false);
+        return AuthState(
+          user: userData,
+          isAuthenticated: true,
+          isLoading: false,
+        );
       } catch (e) {
         await _secureStorage.deleteToken();
         return AuthState(isAuthenticated: false, error: e.toString());
@@ -64,6 +67,19 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
         return AuthState(isAuthenticated: true, error: e.toString());
       }
     });
+  }
+
+  Future<UserJwtModel?> getUser() async {
+    final token = await _secureStorage.getToken();
+    if (token != null) {
+      try {
+        final userData = await _authRepository.getUserFromToken();
+        return userData;
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
   }
 }
 
