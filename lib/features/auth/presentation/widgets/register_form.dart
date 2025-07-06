@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:nexlock_app_v2/core/constants/colors.dart';
 import 'package:nexlock_app_v2/core/validators/form_validators.dart';
 import 'package:nexlock_app_v2/core/widgets/custom_text_field.dart';
@@ -41,6 +42,18 @@ class _RegisterFormState extends ConsumerState<RegisterForm> {
             _passwordController.text,
             _nameController.text.trim(),
           );
+
+      // Only navigate if registration was successful
+      if (mounted) {
+        final authState = ref.read(authProvider);
+        authState.whenData((state) {
+          if ((state.isAuthenticated == true) &&
+              (state.error == null || state.error!.isEmpty)) {
+            context.pushReplacement('/home');
+          }
+          // If there's an error, stay on the register screen
+        });
+      }
     }
   }
 

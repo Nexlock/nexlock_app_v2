@@ -16,28 +16,7 @@ String parseDioError(DioException e) {
           'Server response timeout (3 minutes). The server may be processing your request. Please try again.';
       break;
     case DioExceptionType.badResponse:
-      if (e.response?.statusCode == 401) {
-        errorMessage = 'Invalid credentials';
-        final errorData = e.response?.data;
-
-        if (errorData != null && errorData['message'] != null) {
-          if (errorData['message'] is List) {
-            errorMessage = errorData['message'][0]?.toString() ?? errorMessage;
-          } else if (errorData['message'] is String) {
-            errorMessage = errorData['message'];
-          }
-        }
-      } else if (e.response?.statusCode == 422) {
-        errorMessage = 'Invalid input data. Please check your information.';
-        final errorData = e.response?.data;
-        if (errorData != null && errorData['message'] != null) {
-          errorMessage = errorData['message'].toString();
-        }
-      } else if (e.response?.statusCode == 500) {
-        errorMessage = 'Server error. Please try again later.';
-      } else {
-        errorMessage = 'Request failed with status ${e.response?.statusCode}';
-      }
+      errorMessage = _parseResponseError(e);
       break;
     case DioExceptionType.cancel:
       errorMessage = 'Request was cancelled';
@@ -61,6 +40,66 @@ String parseDioError(DioException e) {
   if (e.response != null) {
     print('Response status: ${e.response?.statusCode}');
     print('Response data: ${e.response?.data}');
+  }
+
+  return errorMessage;
+}
+
+String _parseResponseError(DioException e) {
+  final statusCode = e.response?.statusCode;
+  final errorData = e.response?.data;
+
+  String errorMessage = 'Request failed with status $statusCode';
+
+  // Extract error message from NestJS response format
+  if (errorData != null) {
+    // NestJS typically returns errors in this format:
+    // { "message": "User not found", "error": "Not Found", "statusCode": 404 }
+    // or { "message": ["field1 error", "field2 error"], "error": "Bad Request", "statusCode": 400 }
+
+    if (errorData is Map<String, dynamic>) {
+      final message = errorData['message'];
+
+      if (message != null) {
+        if (message is String) {
+          errorMessage = message;
+        } else if (message is List && message.isNotEmpty) {
+          // Handle validation errors (array of messages)
+          errorMessage = message.first?.toString() ?? errorMessage;
+        }
+      }
+    } else if (errorData is String) {
+      errorMessage = errorData;
+    }
+  }
+
+  // Fallback to status-specific messages if no custom message found
+  if (errorMessage == 'Request failed with status $statusCode') {
+    switch (statusCode) {
+      case 400:
+        errorMessage = 'Bad request. Please check your input.';
+        break;
+      case 401:
+        errorMessage = 'Invalid credentials or unauthorized access.';
+        break;
+      case 403:
+        errorMessage = 'Access forbidden. You don\'t have permission.';
+        break;
+      case 404:
+        errorMessage = 'Resource not found.';
+        break;
+      case 409:
+        errorMessage = 'Conflict. Resource already exists.';
+        break;
+      case 422:
+        errorMessage = 'Invalid input data. Please check your information.';
+        break;
+      case 500:
+        errorMessage = 'Server error. Please try again later.';
+        break;
+      default:
+        errorMessage = 'Request failed with status $statusCode';
+    }
   }
 
   return errorMessage;

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nexlock_app_v2/core/constants/colors.dart';
+import 'package:nexlock_app_v2/features/auth/domain/data/models/auth_state.dart';
 import 'package:nexlock_app_v2/features/auth/domain/data/providers/auth_notifier.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -20,13 +21,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late Animation<double> _logoOpacityAnimation;
   late Animation<double> _fadeAnimation;
   late Animation<double> _pulseAnimation;
+  bool _hasNavigated = false;
 
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
     _startAnimations();
-    _navigateAfterDelay();
+    _scheduleAuthCheck();
   }
 
   void _initializeAnimations() {
@@ -88,36 +90,51 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     });
   }
 
-  void _navigateAfterDelay() async {
-    await Future.delayed(const Duration(seconds: 3));
-
-    if (mounted) {
-      final authState = ref.read(authProvider);
-
-      authState.when(
-        data: (auth) {
-          if (auth.isAuthenticated) {
-            context.go('/home');
-          } else {
-            context.go('/login');
-          }
-        },
-        loading: () => context.go('/login'),
-        error: (_, __) => context.go('/login'),
-      );
-    }
+  void _scheduleAuthCheck() {
+    // Check authentication state after minimum animation time
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (mounted && !_hasNavigated) {
+        final authState = ref.read(authProvider);
+        _navigateBasedOnAuthState(authState);
+      }
+    });
   }
 
-  @override
-  void dispose() {
-    _logoController.dispose();
-    _fadeController.dispose();
-    _pulseController.dispose();
-    super.dispose();
+  void _navigateBasedOnAuthState(AsyncValue<AuthState> authState) {
+    if (_hasNavigated) return;
+
+    authState.when(
+      data: (auth) {
+        _hasNavigated = true;
+        if (auth.isAuthenticated == true &&
+            (auth.error == null || auth.error!.isEmpty)) {
+          context.go('/home');
+        } else {
+          context.go('/login');
+        }
+      },
+      loading: () {
+        // Still loading, wait a bit more
+      },
+      error: (_, __) {
+        _hasNavigated = true;
+        context.go('/login');
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    // Listen to auth state changes
+    ref.listen(authProvider, (previous, next) {
+      if (_hasNavigated) return;
+
+      // Only navigate if we have a definitive auth state (not loading)
+      if (!next.isLoading) {
+        _navigateBasedOnAuthState(next);
+      }
+    });
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(

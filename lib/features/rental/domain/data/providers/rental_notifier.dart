@@ -37,12 +37,12 @@ class RentalNotifier extends AsyncNotifier<RentalState> {
   }
 
   Future<void> rentLocker(String lockerId) async {
-    state = const AsyncValue<RentalState>.loading();
+    state = const AsyncValue.loading();
 
     state = await AsyncValue.guard(() async {
       try {
-        final rental = await _rentalRepository.rentLocker(lockerId);
-        final updatedRentals = [...state.value?.activeRentals ?? [], rental];
+        await _rentalRepository.rentLocker(lockerId);
+        final updatedRentals = await _rentalRepository.getActiveRentals();
         return RentalState(activeRentals: updatedRentals, isLoading: false);
       } catch (e) {
         return RentalState(
@@ -55,16 +55,12 @@ class RentalNotifier extends AsyncNotifier<RentalState> {
   }
 
   Future<void> checkoutLocker(String rentalId) async {
-    state = const AsyncValue<RentalState>.loading();
+    state = const AsyncValue.loading();
 
     state = await AsyncValue.guard(() async {
       try {
-        final rental = await _rentalRepository.checkoutLocker(rentalId);
-        final updatedRentals =
-            state.value?.activeRentals
-                .where((r) => r.id != rental.id)
-                .toList() ??
-            [];
+        await _rentalRepository.checkoutLocker(rentalId);
+        final updatedRentals = await _rentalRepository.getActiveRentals();
         return RentalState(activeRentals: updatedRentals, isLoading: false);
       } catch (e) {
         return RentalState(

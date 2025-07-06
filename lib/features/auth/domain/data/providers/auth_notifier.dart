@@ -31,29 +31,41 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
   Future<void> login(String email, String password) async {
     state = const AsyncValue.data(AuthState(isLoading: true));
 
-    state = await AsyncValue.guard(() async {
-      try {
-        final response = await _authRepository.login(email, password);
-        final user = UserJwtModel.fromJson(response);
-        return AuthState(user: user, isAuthenticated: true, isLoading: false);
-      } catch (e) {
-        return AuthState(isAuthenticated: false, error: e.toString());
-      }
-    });
+    try {
+      final response = await _authRepository.login(email, password);
+      final user = UserJwtModel.fromJson(response);
+      state = AsyncValue.data(
+        AuthState(user: user, isAuthenticated: true, isLoading: false),
+      );
+    } catch (e) {
+      state = AsyncValue.data(
+        AuthState(
+          isAuthenticated: false,
+          isLoading: false,
+          error: e.toString(),
+        ),
+      );
+    }
   }
 
   Future<void> register(String email, String password, String name) async {
     state = const AsyncValue.data(AuthState(isLoading: true));
 
-    state = await AsyncValue.guard(() async {
-      try {
-        final response = await _authRepository.register(email, password, name);
-        final user = UserJwtModel.fromJson(response);
-        return AuthState(user: user, isAuthenticated: true, isLoading: false);
-      } catch (e) {
-        return AuthState(isAuthenticated: false, error: e.toString());
-      }
-    });
+    try {
+      final response = await _authRepository.register(email, password, name);
+      final user = UserJwtModel.fromJson(response);
+      state = AsyncValue.data(
+        AuthState(user: user, isAuthenticated: true, isLoading: false),
+      );
+    } catch (e) {
+      state = AsyncValue.data(
+        AuthState(
+          isAuthenticated: false,
+          isLoading: false,
+          error: e.toString(),
+        ),
+      );
+    }
   }
 
   Future<void> logout() async {

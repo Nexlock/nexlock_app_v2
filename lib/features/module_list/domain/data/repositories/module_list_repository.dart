@@ -10,19 +10,15 @@ class ModuleListRepository {
     required int radius,
   }) async {
     try {
-      final response = await _dio.instance.get(
+      final response = await _dio.instance.post(
         '/module/search',
-        queryParameters: {
-          'latitude': latitude,
-          'longitude': longitude,
-          'radius': radius,
-        },
+        data: {'latitude': latitude, 'longitude': longitude, 'radius': radius},
       );
       return (response.data as List)
           .map((item) => ModuleModel.fromJson(item))
           .toList();
     } catch (e) {
-      rethrow;
+      throw Exception('Error fetching modules by location: $e');
     }
   }
 }

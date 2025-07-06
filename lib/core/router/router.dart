@@ -8,33 +8,41 @@ import 'package:nexlock_app_v2/features/home/presentation/screens/home_screen.da
 import 'package:nexlock_app_v2/features/splash/presentation/screens/splash_screen.dart';
 import 'package:nexlock_app_v2/features/auth/presentation/screens/profile_screen.dart';
 import 'package:nexlock_app_v2/features/rental/presentation/screens/locker_screen.dart';
+import 'package:nexlock_app_v2/features/module_list/presentation/screens/module_list_screen.dart';
+import 'package:nexlock_app_v2/features/module/presentation/screens/module_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
   return GoRouter(
+    initialLocation: '/',
     redirect: (context, state) {
       return authState.when(
         data: (auth) {
-          final isLoggedIn = auth.isAuthenticated;
-          final isGoingToLogin = state.matchedLocation == '/login';
-          final isGoingToRegister = state.matchedLocation == '/register';
-          final isGoingToAuth = isGoingToLogin || isGoingToRegister;
-          final isGoingToSplash = state.matchedLocation == '/';
+          final isLoggedIn = auth.isAuthenticated == true;
+          final currentPath = state.matchedLocation;
 
-          // If not logged in and not going to auth screens or splash, redirect to login
-          if (!isLoggedIn && !isGoingToAuth && !isGoingToSplash) {
-            return '/login';
+          // Don't redirect if there's an authentication error
+          if (auth.error != null && auth.error!.isNotEmpty) {
+            return null;
           }
 
-          // If logged in and going to auth screens or splash, redirect to home
-          if (isLoggedIn && (isGoingToAuth || isGoingToSplash)) {
+          // Only redirect from splash screen when authenticated
+          if (isLoggedIn && currentPath == '/') {
             return '/home';
+          }
+
+          // Redirect to login if trying to access protected routes while not authenticated
+          if (!isLoggedIn &&
+              currentPath != '/' &&
+              currentPath != '/login' &&
+              currentPath != '/register') {
+            return '/login';
           }
 
           return null;
         },
         loading: () => null,
-        error: (_, __) => '/login',
+        error: (_, __) => null, // Don't redirect on error
       );
     },
     routes: [
@@ -51,15 +59,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/search',
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Search Screen - Coming Soon!')),
-        ),
+        builder: (context, state) => const ModuleListScreen(),
       ),
       GoRoute(
         path: '/locker/:lockerId',
         builder: (context, state) {
           final lockerId = state.pathParameters['lockerId']!;
           return LockerScreen(lockerId: lockerId);
+        },
+      ),
+      GoRoute(
+        path: '/module/:moduleId',
+        builder: (context, state) {
+          final moduleId = state.pathParameters['moduleId']!;
+          return ModuleScreen(moduleId: moduleId);
         },
       ),
     ],
