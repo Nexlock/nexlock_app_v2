@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:nexlock_app_v2/core/constants/colors.dart';
-import 'package:nexlock_app_v2/core/services/websocket_service.dart';
 import 'package:nexlock_app_v2/features/module/domain/data/models/module_model.dart';
-import 'dart:async';
 
-class ModuleStatus extends StatefulWidget {
+class ModuleStatus extends StatelessWidget {
   final ModuleModel module;
   final bool isConnected;
 
@@ -15,41 +13,9 @@ class ModuleStatus extends StatefulWidget {
   });
 
   @override
-  State<ModuleStatus> createState() => _ModuleStatusState();
-}
-
-class _ModuleStatusState extends State<ModuleStatus> {
-  final WebSocketService _webSocketService = WebSocketService();
-  late bool _realTimeConnected;
-  StreamSubscription<Map<String, bool>>? _connectionSubscription;
-
-  @override
-  void initState() {
-    super.initState();
-    _realTimeConnected = widget.isConnected;
-
-    // Subscribe to real-time connection updates
-    _connectionSubscription = _webSocketService.connectionStatusStream.listen((
-      statusMap,
-    ) {
-      if (mounted) {
-        setState(() {
-          _realTimeConnected = statusMap[widget.module.id] ?? false;
-        });
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _connectionSubscription?.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16), // Reduced margin
+      margin: const EdgeInsets.symmetric(horizontal: 16),
       child: Card(
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -59,7 +25,7 @@ class _ModuleStatusState extends State<ModuleStatus> {
           ),
         ),
         child: Container(
-          padding: const EdgeInsets.all(20), // Reduced padding
+          padding: const EdgeInsets.all(20),
           child: Column(
             children: [
               // Module Header
@@ -95,17 +61,16 @@ class _ModuleStatusState extends State<ModuleStatus> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.module.name,
+                          module.name,
                           style: Theme.of(context).textTheme.headlineMedium
                               ?.copyWith(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 18,
                               ),
-                          // Remove maxLines to prevent title truncation
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          widget.module.location,
+                          module.location,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
                                 color: Theme.of(
@@ -119,53 +84,13 @@ class _ModuleStatusState extends State<ModuleStatus> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Real-time Connection Status
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color:
-                          (_realTimeConnected
-                                  ? AppColors.success
-                                  : AppColors.error)
-                              .withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: _realTimeConnected
-                                ? AppColors.success
-                                : AppColors.error,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _realTimeConnected ? 'Online' : 'Offline',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: _realTimeConnected
-                                    ? AppColors.success
-                                    : AppColors.error,
-                                fontWeight: FontWeight.w500,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
+
+                  // Connection Status
                 ],
               ),
               const SizedBox(height: 20),
               // Module Description
-              if (widget.module.description.isNotEmpty) ...[
+              if (module.description.isNotEmpty) ...[
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
@@ -177,21 +102,21 @@ class _ModuleStatusState extends State<ModuleStatus> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  widget.module.description,
+                  module.description,
                   style: Theme.of(context).textTheme.bodyMedium,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 20),
               ],
-              // Statistics - Make them more uniform
+              // Statistics
               Row(
                 children: [
                   Expanded(
                     child: _StatCard(
                       icon: Icons.lock,
                       title: 'Total Lockers',
-                      value: '${widget.module.lockers.length}',
+                      value: '${module.lockers.length}',
                       color: AppColors.lightPrimary,
                     ),
                   ),
@@ -201,7 +126,7 @@ class _ModuleStatusState extends State<ModuleStatus> {
                       icon: Icons.lock_open,
                       title: 'Available',
                       value:
-                          '${widget.module.lockers.where((l) => l.lockerRental.isEmpty).length}',
+                          '${module.lockers.where((l) => l.lockerRental.isEmpty).length}',
                       color: AppColors.success,
                     ),
                   ),
@@ -211,7 +136,7 @@ class _ModuleStatusState extends State<ModuleStatus> {
                       icon: Icons.person,
                       title: 'Occupied',
                       value:
-                          '${widget.module.lockers.where((l) => l.lockerRental.isNotEmpty).length}',
+                          '${module.lockers.where((l) => l.lockerRental.isNotEmpty).length}',
                       color: AppColors.warning,
                     ),
                   ),

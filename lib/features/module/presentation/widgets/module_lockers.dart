@@ -157,17 +157,6 @@ class _LockerCard extends StatelessWidget {
                                       ? AppColors.warning
                                       : AppColors.success,
                                 ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  locker.isOpen ? 'Unlocked' : 'Locked',
-                                  style: Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(
-                                        color: locker.isOpen
-                                            ? AppColors.warning
-                                            : AppColors.success,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                ),
                               ],
                             ),
                           ),
@@ -176,24 +165,25 @@ class _LockerCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Status Badge
+                // Status Badge - Made smaller
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
+                    horizontal: 10,
+                    vertical: 4,
                   ),
                   decoration: BoxDecoration(
                     color: _getStatusColor(
                       isAvailable,
                       hasUserRental,
                     ).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
                     _getStatusText(isAvailable, hasUserRental),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: _getStatusColor(isAvailable, hasUserRental),
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 12,
                     ),
                   ),
                 ),

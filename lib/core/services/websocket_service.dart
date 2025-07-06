@@ -11,11 +11,6 @@ class WebSocketService {
   WebSocketChannel? _channel;
   Timer? _pingTimer;
   final Map<String, bool> _moduleConnectionStatus = {};
-  final StreamController<Map<String, bool>> _connectionStatusController =
-      StreamController<Map<String, bool>>.broadcast();
-
-  Stream<Map<String, bool>> get connectionStatusStream =>
-      _connectionStatusController.stream;
 
   bool get isConnected => _channel != null;
 
@@ -61,11 +56,9 @@ class WebSocketService {
           // Keep connection alive
           break;
         case 'connection-acknowledged':
-          // Module acknowledged connection
           print('Connection acknowledged: ${data['message']}');
           break;
         case 'module-registered':
-          // Module registered successfully
           if (data['moduleId'] != null) {
             _updateModuleStatus(data['moduleId'], true);
           }
@@ -74,16 +67,26 @@ class WebSocketService {
           // Status was received by server
           break;
         case 'module-status-update':
-          // Handle module status updates
           if (data['moduleId'] != null && data['isConnected'] != null) {
             _updateModuleStatus(data['moduleId'], data['isConnected']);
           }
           break;
+        case 'module-status-response':
+          // Handle specific module status response
+          if (data['moduleId'] != null && data['isConnected'] != null) {
+            _updateModuleStatus(data['moduleId'], data['isConnected']);
+            print(
+              'Module ${data['moduleId']} status response: ${data['isConnected']}',
+            );
+          }
+          break;
         case 'connection-status-response':
-          // Handle connection status response
           if (data['connectedModules'] != null) {
             _updateAllModuleStatuses(
               List<String>.from(data['connectedModules']),
+            );
+            print(
+              'Connection status response received with ${data['connectedModules'].length} modules',
             );
           }
           break;
@@ -134,7 +137,7 @@ class WebSocketService {
 
   void _updateModuleStatus(String moduleId, bool isConnected) {
     _moduleConnectionStatus[moduleId] = isConnected;
-    _connectionStatusController.add(Map.from(_moduleConnectionStatus));
+    print('Updated module $moduleId status: $isConnected');
   }
 
   void _updateAllModuleStatuses(List<String> connectedModules) {
@@ -147,7 +150,6 @@ class WebSocketService {
     }
 
     print('Updated module statuses: $_moduleConnectionStatus');
-    _connectionStatusController.add(Map.from(_moduleConnectionStatus));
   }
 
   bool getModuleConnectionStatus(String moduleId) {
@@ -197,7 +199,6 @@ class WebSocketService {
     for (String moduleId in _moduleConnectionStatus.keys) {
       _moduleConnectionStatus[moduleId] = false;
     }
-    _connectionStatusController.add(Map.from(_moduleConnectionStatus));
   }
 
   void disconnect() {
@@ -206,6 +207,5 @@ class WebSocketService {
 
   void dispose() {
     _cleanup();
-    _connectionStatusController.close();
   }
 }

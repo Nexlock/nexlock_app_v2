@@ -28,7 +28,6 @@ class _ModuleScreenState extends ConsumerState<ModuleScreen> {
   bool _isConnected = false;
   bool _isLoading = true;
   String? _error;
-  StreamSubscription<Map<String, bool>>? _connectionStatusSubscription;
 
   @override
   void initState() {
@@ -40,7 +39,6 @@ class _ModuleScreenState extends ConsumerState<ModuleScreen> {
 
   @override
   void dispose() {
-    _connectionStatusSubscription?.cancel();
     super.dispose();
   }
 
@@ -54,23 +52,16 @@ class _ModuleScreenState extends ConsumerState<ModuleScreen> {
         await _webSocketService.connect(serverUrl);
       }
 
-      // Subscribe to connection status updates
-      _connectionStatusSubscription = _webSocketService.connectionStatusStream
-          .listen((statusMap) {
-            if (mounted) {
-              setState(() {
-                _isConnected = statusMap[widget.moduleId] ?? false;
-              });
-              print(
-                'Module ${widget.moduleId} connection status: $_isConnected',
-              );
-            }
-          });
-
       // Request initial connection status and specific module status
-      await Future.delayed(const Duration(seconds: 1));
+      await Future.delayed(const Duration(seconds: 2));
+      print('Requesting connection status for module: ${widget.moduleId}');
       _webSocketService.requestConnectionStatus();
       _webSocketService.requestModuleStatus(widget.moduleId);
+
+      // Update status after a delay
+      Timer(const Duration(seconds: 1), () {
+        _updateConnectionStatus();
+      });
     } catch (e) {
       print('WebSocket initialization failed: $e');
       if (mounted) {
@@ -88,7 +79,6 @@ class _ModuleScreenState extends ConsumerState<ModuleScreen> {
   }
 
   void _startPeriodicRefresh() {
-    // Refresh data every 30 seconds for real-time updates
     Timer.periodic(const Duration(seconds: 30), (timer) {
       if (!mounted) {
         timer.cancel();
@@ -107,20 +97,15 @@ class _ModuleScreenState extends ConsumerState<ModuleScreen> {
     try {
       final module = await _moduleRepository.getModuleById(widget.moduleId);
 
-      // Get real-time connection status from WebSocket
-      final connectionStatus = _webSocketService.getModuleConnectionStatus(
-        widget.moduleId,
-      );
-
       setState(() {
         _module = module;
-        _isConnected = connectionStatus;
         _isLoading = false;
       });
 
-      // Refresh rental data to get latest locker statuses
+      // Refresh rental data and check connection status
       if (mounted) {
         ref.read(rentalProvider.notifier).fetchActiveRentals();
+        _updateConnectionStatus();
       }
     } catch (e) {
       setState(() {
@@ -133,12 +118,45 @@ class _ModuleScreenState extends ConsumerState<ModuleScreen> {
   Future<void> _refreshModuleStatus() async {
     if (_module != null) {
       try {
-        // Request fresh connection status from WebSocket
+        print('Refreshing module status for: ${widget.moduleId}');
+        // Request both general connection status and specific module status
         _webSocketService.requestConnectionStatus();
         _webSocketService.requestModuleStatus(widget.moduleId);
+
+        // Update connection status after multiple delays to catch the response
+        Timer(const Duration(milliseconds: 200), () {
+          _updateConnectionStatus();
+        });
+
+        Timer(const Duration(seconds: 1), () {
+          _updateConnectionStatus();
+        });
+
+        Timer(const Duration(seconds: 3), () {
+          _updateConnectionStatus();
+        });
       } catch (e) {
         print('Error refreshing module status: $e');
       }
+    }
+  }
+
+  void _updateConnectionStatus() {
+    final connectionStatus = _webSocketService.getModuleConnectionStatus(
+      widget.moduleId,
+    );
+
+    print(
+      'Checking connection status for ${widget.moduleId}: $connectionStatus',
+    );
+
+    if (mounted) {
+      setState(() {
+        _isConnected = connectionStatus;
+      });
+      print(
+        'Module ${widget.moduleId} UI connection status updated: $_isConnected',
+      );
     }
   }
 
