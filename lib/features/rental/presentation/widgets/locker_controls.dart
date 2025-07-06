@@ -49,6 +49,8 @@ class _LockerControlsState extends ConsumerState<LockerControls> {
             backgroundColor: AppColors.success,
           ),
         );
+        // Add delay to let server catch up
+        await Future.delayed(const Duration(milliseconds: 1500));
         widget.onRentalUpdated?.call();
       } else {
         throw Exception(response.message);
@@ -160,6 +162,43 @@ class _LockerControlsState extends ConsumerState<LockerControls> {
     );
   }
 
+  void _showLockDialog() {
+    final isUnlocking = !widget.locker.isOpen;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(22.4),
+        ),
+        title: Text('${isUnlocking ? 'Unlock' : 'Lock'} Locker'),
+        content: Text(
+          isUnlocking
+              ? 'Are you sure you want to unlock this locker? This will grant you access to the locker contents.'
+              : 'Are you sure you want to lock this locker? This will secure the locker and prevent access.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _toggleLock();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isUnlocking
+                  ? AppColors.lightPrimary
+                  : AppColors.warning,
+              foregroundColor: Colors.white,
+            ),
+            child: Text(isUnlocking ? 'Unlock' : 'Lock'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isAvailable = widget.locker.lockerRental.isEmpty;
@@ -183,7 +222,7 @@ class _LockerControlsState extends ConsumerState<LockerControls> {
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _isToggling ? null : _toggleLock,
+                    onPressed: _isToggling ? null : _showLockDialog,
                     icon: _isToggling
                         ? const SizedBox(
                             width: 20,

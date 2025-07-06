@@ -168,7 +168,7 @@ class _ModuleScreenState extends ConsumerState<ModuleScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_module?.name ?? 'Module'),
+        title: Text('NexLock'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),

@@ -125,7 +125,7 @@ class _RentalCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Locker #${rental.lockerId.substring(0, 8)}',
+                        'Rental #${rental.id.substring(0, 4)}',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
