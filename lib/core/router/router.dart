@@ -7,6 +7,7 @@ import 'package:nexlock_app_v2/features/auth/presentation/screens/register_scree
 import 'package:nexlock_app_v2/features/home/presentation/screens/home_screen.dart';
 import 'package:nexlock_app_v2/features/splash/presentation/screens/splash_screen.dart';
 import 'package:nexlock_app_v2/features/auth/presentation/screens/profile_screen.dart';
+import 'package:nexlock_app_v2/features/rental/presentation/screens/locker_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -58,14 +59,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/locker/:lockerId',
         builder: (context, state) {
           final lockerId = state.pathParameters['lockerId']!;
-          return Scaffold(
-            appBar: AppBar(title: Text('Locker $lockerId')),
-            body: Center(
-              child: Text(
-                'Locker Details - Coming Soon!\nLocker ID: $lockerId',
-              ),
-            ),
-          );
+          return LockerScreen(lockerId: lockerId);
         },
       ),
     ],
