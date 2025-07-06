@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nexlock_app_v2/features/auth/domain/data/providers/auth_notifier.dart';
@@ -42,6 +43,26 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+      GoRoute(
+        path: '/search',
+        builder: (context, state) => const Scaffold(
+          body: Center(child: Text('Search Screen - Coming Soon!')),
+        ),
+      ),
+      GoRoute(
+        path: '/locker/:lockerId',
+        builder: (context, state) {
+          final lockerId = state.pathParameters['lockerId']!;
+          return Scaffold(
+            appBar: AppBar(title: Text('Locker $lockerId')),
+            body: Center(
+              child: Text(
+                'Locker Details - Coming Soon!\nLocker ID: $lockerId',
+              ),
+            ),
+          );
+        },
+      ),
     ],
   );
 });
