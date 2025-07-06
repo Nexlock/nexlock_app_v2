@@ -46,14 +46,6 @@ class ActiveRentals extends ConsumerWidget {
                         shape: BoxShape.circle,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '99.9% Uptime',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.success,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
                   ],
                 ),
               ),

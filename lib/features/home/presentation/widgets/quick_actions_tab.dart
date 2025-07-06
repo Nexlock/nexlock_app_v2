@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:nexlock_app_v2/core/constants/colors.dart';
 
 class QuickActionsTab extends StatelessWidget {
@@ -39,9 +40,7 @@ class QuickActionsTab extends StatelessWidget {
                   title: 'History',
                   subtitle: 'View past rentals',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('History coming soon!')),
-                    );
+                    context.push('/rental-history');
                   },
                 ),
               ),

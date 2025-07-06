@@ -9,6 +9,7 @@ import 'package:nexlock_app_v2/features/auth/presentation/screens/profile_screen
 import 'package:nexlock_app_v2/features/rental/presentation/screens/locker_screen.dart';
 import 'package:nexlock_app_v2/features/module_list/presentation/screens/module_list_screen.dart';
 import 'package:nexlock_app_v2/features/module/presentation/screens/module_screen.dart';
+import 'package:nexlock_app_v2/features/home/presentation/screens/rental_history_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -73,6 +74,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           final moduleId = state.pathParameters['moduleId']!;
           return ModuleScreen(moduleId: moduleId);
         },
+      ),
+      GoRoute(
+        path: '/rental-history',
+        builder: (context, state) => const RentalHistoryScreen(),
       ),
     ],
   );

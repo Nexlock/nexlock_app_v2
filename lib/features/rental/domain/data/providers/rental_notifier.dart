@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nexlock_app_v2/features/rental/domain/data/models/rental_model.dart';
 import 'package:nexlock_app_v2/features/rental/domain/data/models/rental_state.dart';
 import 'package:nexlock_app_v2/features/rental/domain/data/repositories/rental_repository.dart';
 
@@ -72,6 +73,14 @@ class RentalNotifier extends AsyncNotifier<RentalState> {
         );
       }
     });
+  }
+
+  Future<List<RentalModel>> getAllRentals() async {
+    try {
+      return await _rentalRepository.getAllRentals();
+    } catch (e) {
+      throw Exception('Error fetching all rentals: $e');
+    }
   }
 }
 
