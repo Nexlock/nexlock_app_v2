@@ -7,6 +7,18 @@ import 'package:nexlock_app_v2/features/auth/domain/data/providers/auth_notifier
 class ProfileHeader extends ConsumerWidget {
   const ProfileHeader({super.key});
 
+  // Create a function to get what time of the day and what type of greeting to show
+  String getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Good Morning';
+    } else if (hour < 18) {
+      return 'Good Afternoon';
+    } else {
+      return 'Good Evening';
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
@@ -23,16 +35,16 @@ class ProfileHeader extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Good Evening, $userName!',
+                    '${getGreeting()},',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Welcome to your enterprise command center',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    '$userName!',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],

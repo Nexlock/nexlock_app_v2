@@ -32,8 +32,9 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     state = const AsyncValue.data(AuthState(isLoading: true));
 
     try {
-      final response = await _authRepository.login(email, password);
-      final user = UserJwtModel.fromJson(response);
+      await _authRepository.login(email, password);
+      final userResponse = await _authRepository.getUserFromToken();
+      final user = userResponse;
       state = AsyncValue.data(
         AuthState(user: user, isAuthenticated: true, isLoading: false),
       );
@@ -52,8 +53,9 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     state = const AsyncValue.data(AuthState(isLoading: true));
 
     try {
-      final response = await _authRepository.register(email, password, name);
-      final user = UserJwtModel.fromJson(response);
+      await _authRepository.register(email, password, name);
+      final userResponse = await _authRepository.getUserFromToken();
+      final user = userResponse;
       state = AsyncValue.data(
         AuthState(user: user, isAuthenticated: true, isLoading: false),
       );

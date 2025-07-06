@@ -15,13 +15,11 @@ class AuthRepository {
         data: {'email': email, 'password': password},
       );
 
-      if (response.statusCode == 200) {
-        final responseData = response.data;
-        if (responseData is Map<String, dynamic>) {
-          final token = responseData['access_token'];
-          if (token != null && token is String) {
-            await _secureStorage.setToken(token);
-          }
+      final responseData = response.data;
+      if (responseData is Map<String, dynamic>) {
+        final token = responseData['access_token'];
+        if (token != null && token is String) {
+          await _secureStorage.setToken(token);
         }
       }
 
@@ -51,13 +49,11 @@ class AuthRepository {
         data: {'email': email, 'password': password, 'name': name},
       );
 
-      if (response.statusCode == 200) {
-        final responseData = response.data;
-        if (responseData is Map<String, dynamic>) {
-          final token = responseData['access_token'];
-          if (token != null && token is String) {
-            await _secureStorage.setToken(token);
-          }
+      final responseData = response.data;
+      if (responseData is Map<String, dynamic>) {
+        final token = responseData['access_token'];
+        if (token != null && token is String) {
+          await _secureStorage.setToken(token);
         }
       }
 
@@ -84,10 +80,7 @@ class AuthRepository {
         throw Exception('User not found. Please log in again.');
       }
 
-      final response = await _dio.instance.get(
-        '/user/info',
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
+      final response = await _dio.instance.get('/user/info');
 
       return UserJwtModel.fromJson(response.data);
     } catch (e) {

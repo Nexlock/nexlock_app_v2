@@ -45,12 +45,6 @@ class InformationTab extends ConsumerWidget {
                     label: 'Email Address',
                     value: user.email,
                   ),
-                  const SizedBox(height: 20),
-                  _InfoRow(
-                    icon: Icons.badge_outlined,
-                    label: 'User ID',
-                    value: user.id.substring(0, 8),
-                  ),
                 ],
               ),
             ),

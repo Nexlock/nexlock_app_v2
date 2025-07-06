@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:nexlock_app_v2/core/constants/colors.dart';
+import 'package:nexlock_app_v2/core/services/websocket_service.dart';
 import 'package:nexlock_app_v2/features/module/domain/data/models/module_model.dart';
+import 'dart:async';
 
-class ModuleStatus extends StatelessWidget {
+class ModuleStatus extends StatefulWidget {
   final ModuleModel module;
   final bool isConnected;
 
@@ -11,6 +13,38 @@ class ModuleStatus extends StatelessWidget {
     required this.module,
     required this.isConnected,
   });
+
+  @override
+  State<ModuleStatus> createState() => _ModuleStatusState();
+}
+
+class _ModuleStatusState extends State<ModuleStatus> {
+  final WebSocketService _webSocketService = WebSocketService();
+  late bool _realTimeConnected;
+  StreamSubscription<Map<String, bool>>? _connectionSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _realTimeConnected = widget.isConnected;
+
+    // Subscribe to real-time connection updates
+    _connectionSubscription = _webSocketService.connectionStatusStream.listen((
+      statusMap,
+    ) {
+      if (mounted) {
+        setState(() {
+          _realTimeConnected = statusMap[widget.module.id] ?? false;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _connectionSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,13 +95,13 @@ class ModuleStatus extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          module.name,
+                          widget.module.name,
                           style: Theme.of(context).textTheme.headlineMedium
                               ?.copyWith(fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          module.location,
+                          widget.module.location,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
                                 color: Theme.of(
@@ -78,25 +112,29 @@ class ModuleStatus extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Connection Status
+                  // Real-time Connection Status
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: (isConnected ? AppColors.success : AppColors.error)
-                          .withOpacity(0.1),
+                      color:
+                          (_realTimeConnected
+                                  ? AppColors.success
+                                  : AppColors.error)
+                              .withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
                           width: 8,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: isConnected
+                            color: _realTimeConnected
                                 ? AppColors.success
                                 : AppColors.error,
                             shape: BoxShape.circle,
@@ -104,10 +142,10 @@ class ModuleStatus extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          isConnected ? 'Online' : 'Offline',
+                          _realTimeConnected ? 'Online' : 'Offline',
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
-                                color: isConnected
+                                color: _realTimeConnected
                                     ? AppColors.success
                                     : AppColors.error,
                                 fontWeight: FontWeight.w500,
@@ -120,7 +158,7 @@ class ModuleStatus extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               // Module Description
-              if (module.description.isNotEmpty) ...[
+              if (widget.module.description.isNotEmpty) ...[
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
@@ -132,7 +170,7 @@ class ModuleStatus extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  module.description,
+                  widget.module.description,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 20),
@@ -144,7 +182,7 @@ class ModuleStatus extends StatelessWidget {
                     child: _StatCard(
                       icon: Icons.lock,
                       title: 'Total Lockers',
-                      value: '${module.lockers.length}',
+                      value: '${widget.module.lockers.length}',
                       color: AppColors.lightPrimary,
                     ),
                   ),
@@ -154,7 +192,7 @@ class ModuleStatus extends StatelessWidget {
                       icon: Icons.lock_open,
                       title: 'Available',
                       value:
-                          '${module.lockers.where((l) => l.lockerRental.isEmpty).length}',
+                          '${widget.module.lockers.where((l) => l.lockerRental.isEmpty).length}',
                       color: AppColors.success,
                     ),
                   ),
@@ -164,7 +202,7 @@ class ModuleStatus extends StatelessWidget {
                       icon: Icons.person,
                       title: 'Occupied',
                       value:
-                          '${module.lockers.where((l) => l.lockerRental.isNotEmpty).length}',
+                          '${widget.module.lockers.where((l) => l.lockerRental.isNotEmpty).length}',
                       color: AppColors.warning,
                     ),
                   ),

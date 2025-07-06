@@ -17,10 +17,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late AnimationController _logoController;
   late AnimationController _fadeController;
   late AnimationController _pulseController;
+  late AnimationController _particleController;
+  late AnimationController _lockController;
   late Animation<double> _logoScaleAnimation;
   late Animation<double> _logoOpacityAnimation;
   late Animation<double> _fadeAnimation;
   late Animation<double> _pulseAnimation;
+  late Animation<double> _particleAnimation;
+  late Animation<double> _lockRotationAnimation;
   bool _hasNavigated = false;
 
   @override
@@ -32,67 +36,76 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 
   void _initializeAnimations() {
-    // Logo animation controller
     _logoController = AnimationController(
+      duration: const Duration(milliseconds: 1800),
+      vsync: this,
+    );
+
+    _fadeController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
 
-    // Fade animation controller
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 2500),
       vsync: this,
     );
 
-    // Pulse animation controller
-    _pulseController = AnimationController(
+    _particleController = AnimationController(
+      duration: const Duration(milliseconds: 4000),
+      vsync: this,
+    );
+
+    _lockController = AnimationController(
       duration: const Duration(milliseconds: 2000),
       vsync: this,
     );
 
-    // Logo scale animation
-    _logoScaleAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(
+    _logoScaleAnimation = Tween<double>(begin: 0.4, end: 1.0).animate(
       CurvedAnimation(parent: _logoController, curve: Curves.elasticOut),
     );
 
-    // Logo opacity animation
     _logoOpacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _logoController, curve: Curves.easeInOut),
     );
 
-    // Text fade animation
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
     );
 
-    // Pulse animation for loading indicator
-    _pulseAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
+    _pulseAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    _particleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _particleController, curve: Curves.easeInOut),
+    );
+
+    _lockRotationAnimation = Tween<double>(begin: 0.0, end: 0.5).animate(
+      CurvedAnimation(parent: _lockController, curve: Curves.elasticOut),
     );
   }
 
   void _startAnimations() {
-    // Start logo animation immediately
     _logoController.forward();
 
-    // Start text fade animation after logo
-    Future.delayed(const Duration(milliseconds: 600), () {
+    Future.delayed(const Duration(milliseconds: 400), () {
       if (mounted) {
         _fadeController.forward();
+        _lockController.forward();
       }
     });
 
-    // Start pulse animation and repeat
-    Future.delayed(const Duration(milliseconds: 1000), () {
+    Future.delayed(const Duration(milliseconds: 800), () {
       if (mounted) {
         _pulseController.repeat(reverse: true);
+        _particleController.repeat();
       }
     });
   }
 
   void _scheduleAuthCheck() {
-    // Check authentication state after minimum animation time
-    Future.delayed(const Duration(milliseconds: 1500), () {
+    Future.delayed(const Duration(milliseconds: 2000), () {
       if (mounted && !_hasNavigated) {
         final authState = ref.read(authProvider);
         _navigateBasedOnAuthState(authState);
@@ -114,9 +127,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         }
       },
       loading: () {
-        // Still loading, wait a bit more
+        // Handle loading state if needed
       },
-      error: (_, __) {
+      error: (error, stackTrace) {
         _hasNavigated = true;
         context.go('/login');
       },
@@ -125,11 +138,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Listen to auth state changes
     ref.listen(authProvider, (previous, next) {
       if (_hasNavigated) return;
-
-      // Only navigate if we have a definitive auth state (not loading)
       if (!next.isLoading) {
         _navigateBasedOnAuthState(next);
       }
@@ -144,274 +154,404 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             colors: [AppColors.gradientStart, AppColors.gradientEnd],
           ),
         ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Top section with greeting
-              Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    AnimatedBuilder(
+        child: Stack(
+          children: [
+            // Animated background particles
+            AnimatedBuilder(
+              animation: _particleAnimation,
+              builder: (context, child) {
+                return CustomPaint(
+                  painter: ParticlePainter(_particleAnimation.value),
+                  size: Size.infinite,
+                );
+              },
+            ),
+
+            // Main content
+            SafeArea(
+              child: Column(
+                children: [
+                  // Header section
+                  Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: AnimatedBuilder(
                       animation: _fadeAnimation,
                       builder: (context, child) {
                         return Opacity(
                           opacity: _fadeAnimation.value,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'Good Evening!',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineMedium
-                                    ?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'NEXLOCK',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineMedium
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 2,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'IoT Security Solutions',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: Colors.white70,
+                                          letterSpacing: 0.5,
+                                        ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Welcome to your enterprise command center',
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(color: Colors.white70),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.3),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: const BoxDecoration(
+                                        color: AppColors.success,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'SECURE',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 11,
+                                          ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
                         );
                       },
                     ),
-                    AnimatedBuilder(
-                      animation: _fadeAnimation,
-                      builder: (context, child) {
-                        return Opacity(
-                          opacity: _fadeAnimation.value,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.3),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.success,
-                                    shape: BoxShape.circle,
+                  ),
+
+                  // Main logo section
+                  Expanded(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Security badge container
+                          AnimatedBuilder(
+                            animation: _logoController,
+                            builder: (context, child) {
+                              return Transform.scale(
+                                scale: _logoScaleAnimation.value,
+                                child: Opacity(
+                                  opacity: _logoOpacityAnimation.value,
+                                  child: Container(
+                                    width: 160,
+                                    height: 160,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(40),
+                                      border: Border.all(
+                                        color: Colors.white.withOpacity(0.2),
+                                        width: 2,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.1),
+                                          blurRadius: 30,
+                                          offset: const Offset(0, 15),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Stack(
+                                      children: [
+                                        // Circuit pattern background
+                                        CustomPaint(
+                                          painter: CircuitPainter(),
+                                          size: const Size(160, 160),
+                                        ),
+                                        // Lock icon
+                                        Center(
+                                          child: AnimatedBuilder(
+                                            animation: _lockRotationAnimation,
+                                            builder: (context, child) {
+                                              return Transform.rotate(
+                                                angle:
+                                                    _lockRotationAnimation
+                                                        .value *
+                                                    6.28,
+                                                child: Image.asset(
+                                                  'assets/logo-only.png',
+                                                  width: 80,
+                                                  height: 80,
+                                                  color: Colors.white
+                                                      .withOpacity(0.9),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'NextLock',
-                                  style: Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                ),
-                              ],
-                            ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
 
-              // Main content area with logo
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Logo with animation
-                      AnimatedBuilder(
-                        animation: _logoController,
-                        builder: (context, child) {
-                          return Transform.scale(
-                            scale: _logoScaleAnimation.value,
-                            child: Opacity(
-                              opacity: _logoOpacityAnimation.value,
+                          const SizedBox(height: 40),
+
+                          // Company tagline
+                          AnimatedBuilder(
+                            animation: _fadeAnimation,
+                            builder: (context, child) {
+                              return Opacity(
+                                opacity: _fadeAnimation.value,
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      'Smart Locker Solutions',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headlineMedium
+                                          ?.copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w600,
+                                            letterSpacing: 1.2,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'Secure • Connected • Intelligent',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.copyWith(
+                                            color: Colors.white70,
+                                            letterSpacing: 0.8,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+
+                          const SizedBox(height: 50),
+
+                          // Feature highlights
+                          AnimatedBuilder(
+                            animation: _fadeAnimation,
+                            builder: (context, child) {
+                              return Opacity(
+                                opacity: _fadeAnimation.value,
+                                child: Wrap(
+                                  spacing: 12,
+                                  children: [
+                                    _buildFeatureChip(
+                                      'IoT Enabled',
+                                      Icons.wifi,
+                                      AppColors.info,
+                                    ),
+                                    _buildFeatureChip(
+                                      'Bank-Grade Security',
+                                      Icons.security,
+                                      AppColors.success,
+                                    ),
+                                    _buildFeatureChip(
+                                      'Real-time Monitoring',
+                                      Icons.monitor,
+                                      AppColors.warning,
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Loading indicator
+                  Padding(
+                    padding: const EdgeInsets.all(40.0),
+                    child: Column(
+                      children: [
+                        AnimatedBuilder(
+                          animation: _fadeAnimation,
+                          builder: (context, child) {
+                            return Opacity(
+                              opacity: _fadeAnimation.value,
+                              child: Text(
+                                'Initializing secure connection...',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: Colors.white70,
+                                      letterSpacing: 0.5,
+                                    ),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        AnimatedBuilder(
+                          animation: _pulseAnimation,
+                          builder: (context, child) {
+                            return Transform.scale(
+                              scale: _pulseAnimation.value,
                               child: Container(
-                                width: 120,
-                                height: 120,
-                                padding: const EdgeInsets.all(20),
+                                width: 50,
+                                height: 50,
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(30),
+                                  color: Colors.white.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(25),
                                   border: Border.all(
                                     color: Colors.white.withOpacity(0.3),
                                     width: 2,
                                   ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 10),
+                                ),
+                                child: const Center(
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
                                     ),
-                                  ],
-                                ),
-                                child: Image.asset(
-                                  'assets/logo.png',
-                                  width: 80,
-                                  height: 80,
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
-
-                      const SizedBox(height: 32),
-
-                      // App name and tagline
-                      AnimatedBuilder(
-                        animation: _fadeAnimation,
-                        builder: (context, child) {
-                          return Opacity(
-                            opacity: _fadeAnimation.value,
-                            child: Column(
-                              children: [
-                                Text(
-                                  'NEXLOCK',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineLarge
-                                      ?.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 3,
-                                      ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Advanced IoT Solutions',
-                                  style: Theme.of(context).textTheme.bodyLarge
-                                      ?.copyWith(
-                                        color: Colors.white70,
-                                        letterSpacing: 1,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-
-                      const SizedBox(height: 48),
-
-                      // Status indicators
-                      AnimatedBuilder(
-                        animation: _fadeAnimation,
-                        builder: (context, child) {
-                          return Opacity(
-                            opacity: _fadeAnimation.value,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                _buildStatusIndicator(
-                                  '99.9% Uptime',
-                                  AppColors.success,
-                                ),
-                                const SizedBox(width: 24),
-                                _buildStatusIndicator(
-                                  'Enterprise Security',
-                                  AppColors.info,
-                                ),
-                                const SizedBox(width: 24),
-                                _buildStatusIndicator(
-                                  '24/7 Support',
-                                  AppColors.warning,
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ],
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
-
-              // Bottom loading indicator
-              Padding(
-                padding: const EdgeInsets.all(32.0),
-                child: AnimatedBuilder(
-                  animation: _pulseAnimation,
-                  builder: (context, child) {
-                    return Transform.scale(
-                      scale: _pulseAnimation.value,
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.5),
-                            width: 2,
-                          ),
-                        ),
-                        child: const Center(
-                          child: SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildStatusIndicator(String text, Color color) {
+  Widget _buildFeatureChip(String text, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withOpacity(0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
+          Icon(icon, size: 12, color: color),
           const SizedBox(width: 4),
           Text(
             text,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: Colors.white, fontSize: 10),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
     );
   }
+
+  @override
+  void dispose() {
+    _logoController.dispose();
+    _fadeController.dispose();
+    _pulseController.dispose();
+    _particleController.dispose();
+    _lockController.dispose();
+    super.dispose();
+  }
+}
+
+class ParticlePainter extends CustomPainter {
+  final double animationValue;
+
+  ParticlePainter(this.animationValue);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.1)
+      ..strokeWidth = 1;
+
+    // Draw animated particles
+    for (int i = 0; i < 20; i++) {
+      final x = (size.width * (i / 20) + animationValue * 50) % size.width;
+      final y = (size.height * (i / 30) + animationValue * 30) % size.height;
+      canvas.drawCircle(Offset(x, y), 2, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+class CircuitPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.1)
+      ..strokeWidth = 1;
+
+    // Draw circuit-like pattern
+    final centerX = size.width / 2;
+    final centerY = size.height / 2;
+
+    // Draw connecting lines
+    canvas.drawLine(
+      Offset(centerX - 30, centerY - 30),
+      Offset(centerX + 30, centerY + 30),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(centerX + 30, centerY - 30),
+      Offset(centerX - 30, centerY + 30),
+      paint,
+    );
+
+    // Draw small circles at connection points
+    canvas.drawCircle(Offset(centerX - 30, centerY - 30), 3, paint);
+    canvas.drawCircle(Offset(centerX + 30, centerY - 30), 3, paint);
+    canvas.drawCircle(Offset(centerX - 30, centerY + 30), 3, paint);
+    canvas.drawCircle(Offset(centerX + 30, centerY + 30), 3, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

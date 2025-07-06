@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:nexlock_app_v2/core/constants/colors.dart';
+import 'package:nexlock_app_v2/core/services/websocket_service.dart';
 import 'package:nexlock_app_v2/features/module/domain/data/models/module_model.dart';
 import 'package:nexlock_app_v2/features/module/domain/data/repositories/module_repository.dart';
 import 'package:nexlock_app_v2/features/module/presentation/widgets/module_lockers.dart';
 import 'package:nexlock_app_v2/features/module/presentation/widgets/module_status.dart';
 import 'package:nexlock_app_v2/features/rental/domain/data/providers/rental_notifier.dart';
+import 'dart:async';
 
 class ModuleScreen extends ConsumerStatefulWidget {
   final String moduleId;
@@ -19,17 +21,52 @@ class ModuleScreen extends ConsumerStatefulWidget {
 
 class _ModuleScreenState extends ConsumerState<ModuleScreen> {
   final ModuleRepository _moduleRepository = ModuleRepository();
+  final WebSocketService _webSocketService = WebSocketService();
 
   ModuleModel? _module;
   bool _isConnected = false;
   bool _isLoading = true;
   String? _error;
+  StreamSubscription<Map<String, bool>>? _connectionStatusSubscription;
 
   @override
   void initState() {
     super.initState();
+    _initializeWebSocket();
     _loadModuleData();
     _startPeriodicRefresh();
+  }
+
+  @override
+  void dispose() {
+    _connectionStatusSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _initializeWebSocket() async {
+    try {
+      // Connect to WebSocket if not already connected
+      if (!_webSocketService.isConnected) {
+        await _webSocketService.connect(
+          'ws://your-server-url',
+        ); // Replace with your server URL
+      }
+
+      // Subscribe to connection status updates
+      _connectionStatusSubscription = _webSocketService.connectionStatusStream
+          .listen((statusMap) {
+            if (mounted) {
+              setState(() {
+                _isConnected = statusMap[widget.moduleId] ?? false;
+              });
+            }
+          });
+
+      // Request initial connection status
+      _webSocketService.requestConnectionStatus();
+    } catch (e) {
+      print('WebSocket initialization failed: $e');
+    }
   }
 
   void _startPeriodicRefresh() {
@@ -53,13 +90,10 @@ class _ModuleScreenState extends ConsumerState<ModuleScreen> {
     try {
       final module = await _moduleRepository.getModuleById(widget.moduleId);
 
-      if (module == null) {
-        throw Exception('Module not found');
-      }
-
-      // TODO: Implement real-time connection status check
-      // For now, we'll simulate connection status
-      final connectionStatus = await _checkConnectionStatus();
+      // Get real-time connection status from WebSocket
+      final connectionStatus = _webSocketService.getModuleConnectionStatus(
+        widget.moduleId,
+      );
 
       setState(() {
         _module = module;
@@ -79,27 +113,11 @@ class _ModuleScreenState extends ConsumerState<ModuleScreen> {
     }
   }
 
-  Future<bool> _checkConnectionStatus() async {
-    // TODO: Implement actual WebSocket connection check
-    // This would check if the module is connected via WebSocket
-    try {
-      // Simulate connection check
-      await Future.delayed(const Duration(milliseconds: 500));
-      return true; // For demo purposes
-    } catch (e) {
-      return false;
-    }
-  }
-
   Future<void> _refreshModuleStatus() async {
     if (_module != null) {
       try {
-        final connectionStatus = await _checkConnectionStatus();
-        if (mounted) {
-          setState(() {
-            _isConnected = connectionStatus;
-          });
-        }
+        // Request fresh connection status from WebSocket
+        _webSocketService.requestConnectionStatus();
       } catch (e) {
         // Silently handle connection check errors
       }
