@@ -6,6 +6,7 @@ import 'package:nexlock_app_v2/features/auth/presentation/screens/login_screen.d
 import 'package:nexlock_app_v2/features/auth/presentation/screens/register_screen.dart';
 import 'package:nexlock_app_v2/features/home/presentation/screens/home_screen.dart';
 import 'package:nexlock_app_v2/features/splash/presentation/screens/splash_screen.dart';
+import 'package:nexlock_app_v2/features/auth/presentation/screens/profile_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -43,6 +44,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfileScreen(),
+      ),
       GoRoute(
         path: '/search',
         builder: (context, state) => const Scaffold(
