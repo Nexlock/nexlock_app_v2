@@ -104,7 +104,9 @@ class _LockerControlsState extends ConsumerState<LockerControls> {
     try {
       await ref
           .read(rentalProvider.notifier)
-          .checkoutLocker(widget.userRental!.id);
+          .checkoutLocker(
+            widget.locker.id,
+          ); // Use locker.id instead of rental.id
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Checkout successful!'),

@@ -47,28 +47,23 @@ class _LockerScreenState extends ConsumerState<LockerScreen> {
         throw Exception('User not authenticated');
       }
 
-      // Find the locker by searching through all modules
+      // Get locker data directly from module repository
+      final locker = await _moduleRepository.getLockerById(widget.lockerId);
+
+      // Get active rentals to check if user has rental on this locker
       final rentalState = ref.read(rentalProvider).value;
       final allRentals = rentalState?.activeRentals ?? [];
 
-      // First, try to find the locker from active rentals
-      final rental = allRentals.firstWhere(
-        (r) => r.lockerId == widget.lockerId,
-        orElse: () => throw Exception('Locker not found'),
-      );
-
-      // Get the module that contains this locker
-      final module = await _moduleRepository.getModuleById(rental.lockerId);
-      final locker = module.lockers.firstWhere(
-        (l) => l.id == widget.lockerId,
-        orElse: () => throw Exception('Locker not found in module'),
-      );
-
       // Check if current user has an active rental on this locker
-      final userRental = allRentals.firstWhere(
-        (r) => r.lockerId == widget.lockerId && r.userId == userId,
-        orElse: () => throw Exception('No active rental found'),
-      );
+      RentalModel? userRental;
+      try {
+        userRental = allRentals.firstWhere(
+          (r) => r.lockerId == widget.lockerId && r.userId == userId,
+        );
+      } catch (e) {
+        // No rental found, userRental remains null
+        userRental = null;
+      }
 
       setState(() {
         _locker = locker;
@@ -76,20 +71,10 @@ class _LockerScreenState extends ConsumerState<LockerScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      // If not found in active rentals, try to get module info directly
-      try {
-        // This is a fallback - we'll need to implement a way to get locker by ID
-        // For now, show error
-        setState(() {
-          _error = 'Locker not found or not accessible';
-          _isLoading = false;
-        });
-      } catch (e2) {
-        setState(() {
-          _error = e.toString();
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
     }
   }
 
@@ -216,69 +201,17 @@ class _LockerScreenState extends ConsumerState<LockerScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 20),
+            const SizedBox(height: 20), // Reduced spacing
             // Locker Status
             LockerStatus(locker: _locker!, userRental: _userRental),
-            const SizedBox(height: 32),
+            const SizedBox(height: 32), // Reduced spacing
             // Locker Controls
             LockerControls(
               locker: _locker!,
               userRental: _userRental,
               onRentalUpdated: _onRentalUpdated,
             ),
-            const SizedBox(height: 32),
-            // Additional Info
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Locker Information',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Card(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(22.4),
-                      side: BorderSide(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.outline.withOpacity(0.1),
-                      ),
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        children: [
-                          _InfoRow(
-                            icon: Icons.fingerprint,
-                            label: 'Locker ID',
-                            value: widget.lockerId,
-                          ),
-                          const SizedBox(height: 16),
-                          _InfoRow(
-                            icon: Icons.access_time,
-                            label: 'Last Updated',
-                            value: _formatDateTime(_locker!.updatedAt),
-                          ),
-                          const SizedBox(height: 16),
-                          _InfoRow(
-                            icon: Icons.location_on,
-                            label: 'Module ID',
-                            value: _locker!.moduleId,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 32), // Reduced spacing
           ],
         ),
       ),

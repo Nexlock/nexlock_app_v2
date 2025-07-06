@@ -7,7 +7,7 @@ class ModuleListRepository {
   Future<List<ModuleModel>> getModulesByLocation({
     required double latitude,
     required double longitude,
-    required int radius,
+    required double radius,
   }) async {
     try {
       final response = await _dio.instance.post(

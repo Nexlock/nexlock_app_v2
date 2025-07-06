@@ -15,15 +15,16 @@ class ModuleLockers extends ConsumerWidget {
     final rentalState = ref.watch(rentalProvider);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
+      margin: const EdgeInsets.symmetric(horizontal: 16), // Reduced margin
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Lockers',
-            style: Theme.of(
-              context,
-            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w600),
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              fontSize: 20,
+            ),
           ),
           const SizedBox(height: 16),
           if (lockers.isEmpty)
@@ -81,7 +82,7 @@ class _LockerCard extends StatelessWidget {
     final isAvailable = locker.lockerRental.isEmpty;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16), // Increased spacing
       child: Card(
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -96,28 +97,28 @@ class _LockerCard extends StatelessWidget {
           },
           borderRadius: BorderRadius.circular(22.4),
           child: Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20), // Increased padding
             child: Row(
               children: [
                 // Locker Icon
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 56, // Larger icon container
+                  height: 56,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: _getStatusGradient(isAvailable, hasUserRental),
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Icon(
                     _getStatusIcon(isAvailable, hasUserRental),
                     color: Colors.white,
-                    size: 24,
+                    size: 28, // Larger icon
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 20), // Increased spacing
                 // Locker Info
                 Expanded(
                   child: Column(
@@ -127,37 +128,48 @@ class _LockerCard extends StatelessWidget {
                         'Locker #$lockerNumber',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w600,
+                          fontSize: 16,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 8), // Increased spacing
                       Row(
                         children: [
-                          Icon(
-                            locker.isOpen ? Icons.lock_open : Icons.lock,
-                            size: 16,
-                            color: locker.isOpen
-                                ? AppColors.warning
-                                : AppColors.success,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            locker.isOpen ? 'Unlocked' : 'Locked',
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  (locker.isOpen
+                                          ? AppColors.warning
+                                          : AppColors.success)
+                                      .withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  locker.isOpen ? Icons.lock_open : Icons.lock,
+                                  size: 14,
                                   color: locker.isOpen
                                       ? AppColors.warning
                                       : AppColors.success,
                                 ),
-                          ),
-                          const SizedBox(width: 16),
-                          Text(
-                            'ID: ${locker.id.substring(0, 8)}',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
+                                const SizedBox(width: 4),
+                                Text(
+                                  locker.isOpen ? 'Unlocked' : 'Locked',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: locker.isOpen
+                                            ? AppColors.warning
+                                            : AppColors.success,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                 ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -167,8 +179,8 @@ class _LockerCard extends StatelessWidget {
                 // Status Badge
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
+                    horizontal: 16,
+                    vertical: 8,
                   ),
                   decoration: BoxDecoration(
                     color: _getStatusColor(
@@ -181,11 +193,11 @@ class _LockerCard extends StatelessWidget {
                     _getStatusText(isAvailable, hasUserRental),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: _getStatusColor(isAvailable, hasUserRental),
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 12),
                 Icon(
                   Icons.arrow_forward_ios,
                   size: 16,

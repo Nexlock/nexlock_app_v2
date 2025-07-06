@@ -8,6 +8,7 @@ import 'package:nexlock_app_v2/core/constants/colors.dart';
 import 'package:nexlock_app_v2/features/module/domain/data/models/module_model.dart';
 import 'package:nexlock_app_v2/features/module_list/domain/data/repositories/module_list_repository.dart';
 import 'package:nexlock_app_v2/features/module_list/presentation/widgets/module_list_filter.dart';
+import 'package:nexlock_app_v2/features/module_list/presentation/widgets/module_bottom_sheet.dart';
 import 'dart:ui' as ui;
 import 'dart:typed_data';
 import 'package:flutter/services.dart';
@@ -26,11 +27,14 @@ class _ModuleListScreenState extends ConsumerState<ModuleListScreen> {
   bool _isLoadingModules = false;
   String? _locationError;
   List<ModuleModel> _modules = [];
-  double _searchRadius = 1.0; // Default 1km
+  double _searchRadius = 5.0; // Default 5km
   Set<Marker> _markers = {};
 
   final ModuleListRepository _moduleRepository = ModuleListRepository();
   BitmapDescriptor? _customMarkerIcon;
+
+  bool _isMapReady = false;
+  String? _mapError;
 
   @override
   void initState() {
@@ -103,13 +107,15 @@ class _ModuleListScreenState extends ConsumerState<ModuleListScreen> {
         _isLoadingModules = true;
       });
 
-      // Convert km to degrees (approximate)
-      final radiusInDegrees = _searchRadius * 0.008983;
+      // Convert km to degrees using proper formula
+      // 1 degree latitude ≈ 111 km
+      // 1 degree longitude ≈ 111 km * cos(latitude)
+      final radiusInDegrees = _searchRadius / 111.0;
 
       final modules = await _moduleRepository.getModulesByLocation(
         latitude: _currentPosition!.latitude,
         longitude: _currentPosition!.longitude,
-        radius: radiusInDegrees.toInt(),
+        radius: radiusInDegrees,
       );
 
       setState(() {
@@ -182,173 +188,9 @@ class _ModuleListScreenState extends ConsumerState<ModuleListScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.4,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(22.4)),
-        ),
-        child: Column(
-          children: [
-            // Handle bar
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.outline,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            // Content
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                AppColors.gradientStart,
-                                AppColors.gradientEnd,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.asset(
-                              'assets/logo-only.png',
-                              width: 24,
-                              height: 24,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                module.name,
-                                style: Theme.of(context).textTheme.headlineSmall
-                                    ?.copyWith(fontWeight: FontWeight.w600),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                module.location,
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Description',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      module.description,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Available Lockers',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${module.lockers.where((l) => l.lockerRental.isEmpty).length}/${module.lockers.length}',
-                              style: Theme.of(context).textTheme.bodyLarge
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.success,
-                                  ),
-                            ),
-                          ],
-                        ),
-                        if (_currentPosition != null)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                'Distance',
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${_calculateDistance(module).toStringAsFixed(1)} km',
-                                style: Theme.of(context).textTheme.bodyLarge
-                                    ?.copyWith(fontWeight: FontWeight.w600),
-                              ),
-                            ],
-                          ),
-                      ],
-                    ),
-                    const Spacer(),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          context.push('/module/${module.id}');
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.lightPrimary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(22.4),
-                          ),
-                        ),
-                        child: const Text('View Module'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      builder: (context) =>
+          ModuleBottomSheet(module: module, currentPosition: _currentPosition),
     );
-  }
-
-  double _calculateDistance(ModuleModel module) {
-    if (_currentPosition == null) return 0.0;
-
-    return Geolocator.distanceBetween(
-          _currentPosition!.latitude,
-          _currentPosition!.longitude,
-          module.latitude,
-          module.longitude,
-        ) /
-        1000; // Convert meters to kilometers
   }
 
   void _centerMapOnUser() {
@@ -472,8 +314,20 @@ class _ModuleListScreenState extends ConsumerState<ModuleListScreen> {
     return Stack(
       children: [
         GoogleMap(
-          onMapCreated: (controller) {
-            _mapController = controller;
+          onMapCreated: (controller) async {
+            try {
+              _mapController = controller;
+              setState(() {
+                _isMapReady = true;
+                _mapError = null;
+              });
+              print('Google Maps initialized successfully');
+            } catch (e) {
+              setState(() {
+                _mapError = 'Failed to initialize map: $e';
+              });
+              print('Google Maps error: $e');
+            }
           },
           initialCameraPosition: _currentPosition != null
               ? CameraPosition(
@@ -493,13 +347,74 @@ class _ModuleListScreenState extends ConsumerState<ModuleListScreen> {
           compassEnabled: true,
           zoomControlsEnabled: false,
           mapType: MapType.normal,
+          // Optimize for better performance
+          liteModeEnabled: false,
+          trafficEnabled: false,
+          buildingsEnabled: true,
+          indoorViewEnabled: false,
+          tiltGesturesEnabled: false,
+          rotateGesturesEnabled: false,
+          scrollGesturesEnabled: true,
+          zoomGesturesEnabled: true,
           onTap: (position) {
-            // Hide any open bottom sheets when tapping on map
             Navigator.of(context).popUntil((route) => route.isFirst);
           },
         ),
+        // Error overlay for map issues
+        if (_mapError != null)
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(0.8),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.map_outlined,
+                      size: 64,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Map Error',
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Text(
+                        _mapError!,
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(color: Colors.white70),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _mapError = null;
+                        });
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.lightPrimary,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         // Module count overlay
-        if (_modules.isNotEmpty)
+        if (_modules.isNotEmpty && _isMapReady)
           Positioned(
             top: 16,
             left: 16,

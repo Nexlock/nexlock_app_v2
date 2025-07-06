@@ -1,4 +1,5 @@
 import 'package:nexlock_app_v2/core/handlers/dio_handler.dart';
+import 'package:nexlock_app_v2/features/module/domain/data/models/locker_model.dart';
 import 'package:nexlock_app_v2/features/module/domain/data/models/module_model.dart';
 import 'package:nexlock_app_v2/features/module/domain/data/models/toggle_lock_response.dart';
 
@@ -26,6 +27,15 @@ class ModuleRepository {
       return ToggleLockResponse.fromJson(response.data);
     } catch (e) {
       throw Exception('Error toggling locker lock: $e');
+    }
+  }
+
+  Future<LockerModel> getLockerById(String lockerId) async {
+    try {
+      final response = await _dio.instance.get('/module/locker/$lockerId');
+      return LockerModel.fromJson(response.data);
+    } catch (e) {
+      throw Exception('Error fetching locker by ID: $e');
     }
   }
 }

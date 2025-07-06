@@ -24,6 +24,8 @@ class WebSocketService {
       final wsUrl = baseUrl
           .replaceFirst('http', 'ws')
           .replaceFirst('https', 'wss');
+
+      print('Attempting to connect to WebSocket: $wsUrl/ws');
       _channel = WebSocketChannel.connect(Uri.parse('$wsUrl/ws'));
 
       // Listen for messages
@@ -33,29 +35,60 @@ class WebSocketService {
         onError: _handleError,
       );
 
-      // Start ping timer
+      // Start ping timer and request initial status
       _startPingTimer();
+
+      // Request connection status after a short delay to ensure connection is established
+      Timer(const Duration(seconds: 1), () {
+        requestConnectionStatus();
+      });
+
+      print('WebSocket connected successfully');
     } catch (e) {
       print('WebSocket connection failed: $e');
+      print('Make sure your server is running and accessible at: $baseUrl');
+      rethrow;
     }
   }
 
   void _handleMessage(dynamic message) {
     try {
       final data = json.decode(message);
+      print('WebSocket received: $data');
 
       switch (data['type']) {
         case 'pong':
           // Keep connection alive
           break;
-        case 'module-status-update':
-          _updateModuleStatus(data['moduleId'], data['isConnected']);
+        case 'connection-acknowledged':
+          // Module acknowledged connection
+          print('Connection acknowledged: ${data['message']}');
           break;
-        case 'connection-status':
-          if (data['connectedModules'] != null) {
-            _updateAllModuleStatuses(data['connectedModules']);
+        case 'module-registered':
+          // Module registered successfully
+          if (data['moduleId'] != null) {
+            _updateModuleStatus(data['moduleId'], true);
           }
           break;
+        case 'status-received':
+          // Status was received by server
+          break;
+        case 'module-status-update':
+          // Handle module status updates
+          if (data['moduleId'] != null && data['isConnected'] != null) {
+            _updateModuleStatus(data['moduleId'], data['isConnected']);
+          }
+          break;
+        case 'connection-status-response':
+          // Handle connection status response
+          if (data['connectedModules'] != null) {
+            _updateAllModuleStatuses(
+              List<String>.from(data['connectedModules']),
+            );
+          }
+          break;
+        default:
+          print('Unknown WebSocket message type: ${data['type']}');
       }
     } catch (e) {
       print('Error parsing WebSocket message: $e');
@@ -104,11 +137,16 @@ class WebSocketService {
     _connectionStatusController.add(Map.from(_moduleConnectionStatus));
   }
 
-  void _updateAllModuleStatuses(List<dynamic> connectedModules) {
+  void _updateAllModuleStatuses(List<String> connectedModules) {
+    // Clear previous status
     _moduleConnectionStatus.clear();
+
+    // Mark connected modules as online
     for (String moduleId in connectedModules) {
       _moduleConnectionStatus[moduleId] = true;
     }
+
+    print('Updated module statuses: $_moduleConnectionStatus');
     _connectionStatusController.add(Map.from(_moduleConnectionStatus));
   }
 
@@ -125,8 +163,26 @@ class WebSocketService {
             'timestamp': DateTime.now().millisecondsSinceEpoch,
           }),
         );
+        print('Requested connection status from server');
       } catch (e) {
         print('Failed to request connection status: $e');
+      }
+    }
+  }
+
+  void requestModuleStatus(String moduleId) {
+    if (_channel != null) {
+      try {
+        _channel!.sink.add(
+          json.encode({
+            'type': 'get-module-status',
+            'moduleId': moduleId,
+            'timestamp': DateTime.now().millisecondsSinceEpoch,
+          }),
+        );
+        print('Requested status for module: $moduleId');
+      } catch (e) {
+        print('Failed to request module status: $e');
       }
     }
   }

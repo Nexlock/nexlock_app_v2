@@ -8,6 +8,7 @@ import 'package:nexlock_app_v2/features/module/domain/data/repositories/module_r
 import 'package:nexlock_app_v2/features/module/presentation/widgets/module_lockers.dart';
 import 'package:nexlock_app_v2/features/module/presentation/widgets/module_status.dart';
 import 'package:nexlock_app_v2/features/rental/domain/data/providers/rental_notifier.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:async';
 
 class ModuleScreen extends ConsumerStatefulWidget {
@@ -45,11 +46,12 @@ class _ModuleScreenState extends ConsumerState<ModuleScreen> {
 
   Future<void> _initializeWebSocket() async {
     try {
-      // Connect to WebSocket if not already connected
+      final serverUrl = dotenv.env['API_URL'] ?? '';
+
+      print('Connecting to WebSocket at: $serverUrl');
+
       if (!_webSocketService.isConnected) {
-        await _webSocketService.connect(
-          'ws://your-server-url',
-        ); // Replace with your server URL
+        await _webSocketService.connect(serverUrl);
       }
 
       // Subscribe to connection status updates
@@ -59,25 +61,40 @@ class _ModuleScreenState extends ConsumerState<ModuleScreen> {
               setState(() {
                 _isConnected = statusMap[widget.moduleId] ?? false;
               });
+              print(
+                'Module ${widget.moduleId} connection status: $_isConnected',
+              );
             }
           });
 
-      // Request initial connection status
+      // Request initial connection status and specific module status
+      await Future.delayed(const Duration(seconds: 1));
       _webSocketService.requestConnectionStatus();
+      _webSocketService.requestModuleStatus(widget.moduleId);
     } catch (e) {
       print('WebSocket initialization failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Connection failed: ${e.toString()}. Check if server is running on your network.',
+            ),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
     }
   }
 
   void _startPeriodicRefresh() {
     // Refresh data every 30 seconds for real-time updates
-    Future.doWhile(() async {
-      if (!mounted) return false;
-      await Future.delayed(const Duration(seconds: 30));
-      if (mounted) {
-        _refreshModuleStatus();
+    Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
       }
-      return mounted;
+      _refreshModuleStatus();
     });
   }
 
@@ -118,8 +135,9 @@ class _ModuleScreenState extends ConsumerState<ModuleScreen> {
       try {
         // Request fresh connection status from WebSocket
         _webSocketService.requestConnectionStatus();
+        _webSocketService.requestModuleStatus(widget.moduleId);
       } catch (e) {
-        // Silently handle connection check errors
+        print('Error refreshing module status: $e');
       }
     }
   }
@@ -241,123 +259,16 @@ class _ModuleScreenState extends ConsumerState<ModuleScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 20),
+            const SizedBox(height: 20), // Reduced top spacing
             // Module Status
             ModuleStatus(module: _module!, isConnected: _isConnected),
-            const SizedBox(height: 32),
+            const SizedBox(height: 32), // Reduced spacing
             // Module Lockers
             ModuleLockers(lockers: _module!.lockers),
-            const SizedBox(height: 32),
-            // Additional Module Info
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Module Information',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Card(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(22.4),
-                      side: BorderSide(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.outline.withOpacity(0.1),
-                      ),
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        children: [
-                          _InfoRow(
-                            icon: Icons.fingerprint,
-                            label: 'Module ID',
-                            value: widget.moduleId,
-                          ),
-                          const SizedBox(height: 16),
-                          _InfoRow(
-                            icon: Icons.access_time,
-                            label: 'Last Updated',
-                            value: _formatDateTime(_module!.updatedAt),
-                          ),
-                          const SizedBox(height: 16),
-                          _InfoRow(
-                            icon: Icons.location_on,
-                            label: 'Coordinates',
-                            value:
-                                '${_module!.latitude.toStringAsFixed(4)}, ${_module!.longitude.toStringAsFixed(4)}',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 32), // Reduced bottom spacing
           ],
         ),
       ),
-    );
-  }
-
-  String _formatDateTime(DateTime dateTime) {
-    return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _InfoRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: AppColors.lightPrimary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: AppColors.lightPrimary, size: 20),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

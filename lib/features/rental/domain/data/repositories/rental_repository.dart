@@ -39,16 +39,16 @@ class RentalRepository {
 
   Future<RentalModel> rentLocker(String lockerId) async {
     try {
-      final response = await _dio.instance.post('/rental/$lockerId');
+      final response = await _dio.instance.post('/rental/rent/$lockerId');
       return RentalModel.fromJson(response.data);
     } catch (e) {
       throw Exception('Error renting locker: $e');
     }
   }
 
-  Future<RentalModel> checkoutLocker(String rentalId) async {
+  Future<RentalModel> checkoutLocker(String lockerId) async {
     try {
-      final response = await _dio.instance.post('/rental/checkout/$rentalId');
+      final response = await _dio.instance.post('/rental/checkout/$lockerId');
       return RentalModel.fromJson(response.data);
     } catch (e) {
       throw Exception('Error checking out rental: $e');

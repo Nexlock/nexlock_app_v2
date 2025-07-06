@@ -15,7 +15,7 @@ class LockerStatus extends StatelessWidget {
     final isUserRented = userRental != null;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
+      margin: const EdgeInsets.symmetric(horizontal: 16), // Reduced margin
       child: Card(
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -25,7 +25,7 @@ class LockerStatus extends StatelessWidget {
           ),
         ),
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20), // Reduced padding
           child: Column(
             children: [
               // Status Icon
@@ -46,32 +46,36 @@ class LockerStatus extends StatelessWidget {
                   size: 40,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 16), // Increased spacing
               // Status Title
               Text(
                 _getStatusTitle(isAvailable, isUserRented),
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w600,
+                  fontSize: 22,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12), // Increased spacing
               // Status Description
               Text(
                 _getStatusDescription(isAvailable, isUserRented),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 15,
                 ),
                 textAlign: TextAlign.center,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
               ),
               if (userRental != null) ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: 20), // Increased spacing
                 // Rental Info
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20), // Increased padding
                   decoration: BoxDecoration(
                     color: AppColors.lightPrimary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
                     children: [
@@ -80,7 +84,8 @@ class LockerStatus extends StatelessWidget {
                         children: [
                           Text(
                             'Rental Started',
-                            style: Theme.of(context).textTheme.bodyMedium,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(fontWeight: FontWeight.w500),
                           ),
                           Text(
                             _formatDateTime(userRental!.startTime),
@@ -89,13 +94,14 @@ class LockerStatus extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
                             'Duration',
-                            style: Theme.of(context).textTheme.bodyMedium,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(fontWeight: FontWeight.w500),
                           ),
                           Text(
                             _calculateDuration(userRental!.startTime),
@@ -109,28 +115,39 @@ class LockerStatus extends StatelessWidget {
                 ),
               ],
               // Lock Status
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    locker.isOpen ? Icons.lock_open : Icons.lock,
-                    color: locker.isOpen
-                        ? AppColors.warning
-                        : AppColors.success,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    locker.isOpen ? 'Unlocked' : 'Locked',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              const SizedBox(height: 20), // Increased spacing
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: (locker.isOpen ? AppColors.warning : AppColors.success)
+                      .withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      locker.isOpen ? Icons.lock_open : Icons.lock,
                       color: locker.isOpen
                           ? AppColors.warning
                           : AppColors.success,
-                      fontWeight: FontWeight.w600,
+                      size: 20,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    Text(
+                      locker.isOpen ? 'Unlocked' : 'Locked',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: locker.isOpen
+                            ? AppColors.warning
+                            : AppColors.success,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

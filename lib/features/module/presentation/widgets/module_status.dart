@@ -49,7 +49,7 @@ class _ModuleStatusState extends State<ModuleStatus> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
+      margin: const EdgeInsets.symmetric(horizontal: 16), // Reduced margin
       child: Card(
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -59,7 +59,7 @@ class _ModuleStatusState extends State<ModuleStatus> {
           ),
         ),
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20), // Reduced padding
           child: Column(
             children: [
               // Module Header
@@ -97,7 +97,11 @@ class _ModuleStatusState extends State<ModuleStatus> {
                         Text(
                           widget.module.name,
                           style: Theme.of(context).textTheme.headlineMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
+                              ?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 18,
+                              ),
+                          // Remove maxLines to prevent title truncation
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -108,10 +112,13 @@ class _ModuleStatusState extends State<ModuleStatus> {
                                   context,
                                 ).colorScheme.onSurfaceVariant,
                               ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
                   ),
+                  const SizedBox(width: 12),
                   // Real-time Connection Status
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -172,10 +179,12 @@ class _ModuleStatusState extends State<ModuleStatus> {
                 Text(
                   widget.module.description,
                   style: Theme.of(context).textTheme.bodyMedium,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 20),
               ],
-              // Statistics
+              // Statistics - Make them more uniform
               Row(
                 children: [
                   Expanded(
@@ -232,20 +241,23 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: 120, // Fixed height for uniformity
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, color: color, size: 24),
           const SizedBox(height: 8),
           Text(
             value,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.w700,
               color: color,
+              fontSize: 20,
             ),
           ),
           const SizedBox(height: 4),
@@ -253,8 +265,11 @@ class _StatCard extends StatelessWidget {
             title,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
             ),
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

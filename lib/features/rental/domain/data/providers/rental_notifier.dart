@@ -54,17 +54,19 @@ class RentalNotifier extends AsyncNotifier<RentalState> {
     });
   }
 
-  Future<void> checkoutLocker(String rentalId) async {
+  Future<void> checkoutLocker(String lockerId) async {
     state = const AsyncValue.loading();
 
     state = await AsyncValue.guard(() async {
       try {
-        await _rentalRepository.checkoutLocker(rentalId);
+        await _rentalRepository.checkoutLocker(lockerId);
         final updatedRentals = await _rentalRepository.getActiveRentals();
         return RentalState(activeRentals: updatedRentals, isLoading: false);
       } catch (e) {
+        // Get current state to preserve data on error
+        final currentState = state.value;
         return RentalState(
-          activeRentals: [],
+          activeRentals: currentState?.activeRentals ?? [],
           isLoading: false,
           error: e.toString(),
         );
